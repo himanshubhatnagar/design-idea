@@ -1,149 +1,148 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React from "react";
 import {
   ComposableMap,
   Geographies,
   Geography,
   ZoomableGroup,
+  Marker,
 } from "react-simple-maps";
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
-// Updated with modern neon colors
-const highlightedCountries = [
-  { name: "United States of America", code: "USA", color: "#3b82f6", region: "Americas" },
-  { name: "United Kingdom", code: "GBR", color: "#a855f7", region: "Europe" },
-  { name: "Switzerland", code: "CHE", color: "#10b981", region: "Europe" },
+interface CountryData {
+  name: string;
+  displayLabel: string;
+  coordinates: [number, number];
+  offset: { x: number; y: number }; // Added for positioning
+  color: string;
+  stats: { label: string; value: string }[];
+}
+
+const highlightedCountries: CountryData[] = [
+  {
+    name: "United States of America",
+    displayLabel: "US(HC:1,211)",
+    coordinates: [-100, 38],
+    offset: { x: -70, y: -115 }, // Standard center-top
+    color: "#3b82f6",
+    stats: [
+      { label: "Insights", value: "420" },
+      { label: "Risk Mgmt", value: "310" },
+      { label: "Compliance", value: "98%" },
+      { label: "AI Nodes", value: "14" },
+      { label: "Efficiency", value: "+22%" },
+      { label: "Uptime", value: "99.9%" },
+      { label: "Security", value: "Tier 1" },
+    ],
+  },
+  {
+    name: "United Kingdom",
+    displayLabel: "UK(HC:842)",
+    coordinates: [-2, 53],
+    offset: { x: -150, y: -130 }, // Pushed further Left and Up
+    color: "#a855f7",
+    stats: [
+      { label: "Insights", value: "280" },
+      { label: "Risk Mgmt", value: "190" },
+      { label: "Compliance", value: "96%" },
+      { label: "AI Nodes", value: "8" },
+      { label: "Efficiency", value: "+18%" },
+      { label: "Uptime", value: "99.8%" },
+      { label: "Security", value: "Tier 1" },
+    ],
+  },
+  {
+    name: "Switzerland",
+    displayLabel: "CH(HC:612)",
+    coordinates: [8.2, 46.8],
+    offset: { x: 10, y: -40 }, // Pushed Right and slightly Down
+    color: "#10b981",
+    stats: [
+      { label: "Insights", value: "150" },
+      { label: "Risk Mgmt", value: "420" },
+      { label: "Compliance", value: "100%" },
+      { label: "AI Nodes", value: "12" },
+      { label: "Efficiency", value: "+30%" },
+      { label: "Uptime", value: "99.9%" },
+      { label: "Security", value: "Tier 1" },
+    ],
+  },
 ];
 
 export const GlobalMapSection = () => {
-  const [tooltip, setTooltip] = useState<{ name: string; color: string } | null>(null);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleMouseMove = (e: React.MouseEvent, geo: any) => {
-    const country = highlightedCountries.find((c) => c.name === geo.properties.name);
-    if (country) {
-      setTooltip({ name: country.name, color: country.color });
-      setPosition({ x: e.clientX, y: e.clientY });
-    } else {
-      setTooltip(null);
-    }
-  };
-
   return (
-    <section id="map" className="py-24 bg-[#030303] text-white">
+    <section className="py-24 bg-[#030303] text-white min-h-screen">
       <div className="container mx-auto px-6">
-        
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="max-w-3xl mb-16"
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <div className="h-[1px] w-12 bg-blue-500" />
-            <span className="text-blue-500 font-mono text-xs tracking-widest uppercase">Coverage</span>
-          </div>
-          <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-            Global <span className="text-white/40">Support.</span>
-          </h2>
-          <p className="text-gray-400 text-lg">
-            Strategically positioned to deliver AI-driven insights across major global financial hubs.
-          </p>
-        </motion.div>
+        <div className="relative bg-white/[0.02] rounded-[2.5rem] border border-white/5 overflow-hidden h-[600px] w-full">
+          <ComposableMap
+            projectionConfig={{ scale: 180, center: [0, 40] }} // Zoomed in slightly on Northern Hemisphere
+            width={800}
+            height={500}
+            style={{ width: "100%", height: "100%" }}
+          >
+            <ZoomableGroup zoom={1} minZoom={1} maxZoom={1} disablePanning>
+              <Geographies geography={geoUrl}>
+                {({ geographies }) =>
+                  geographies.map((geo) => {
+                    const country = highlightedCountries.find(
+                      (c) => c.name === geo.properties.name
+                    );
+                    return (
+                      <Geography
+                        key={geo.rsmKey}
+                        geography={geo}
+                        fill={country ? country.color : "#1a1a1a"}
+                        stroke="#000"
+                        strokeWidth={0.5}
+                        style={{ default: { outline: "none" } }}
+                      />
+                    );
+                  })
+                }
+              </Geographies>
 
-        {/* Map Container */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.98 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          className="relative bg-white/[0.02] rounded-[2.5rem] border border-white/5 overflow-hidden backdrop-blur-sm shadow-2xl"
-        >
-          <div className="w-full h-[500px] md:h-[650px] cursor-crosshair">
-            <ComposableMap
-              projectionConfig={{ scale: 160, center: [0, 10] }}
-              style={{ width: "100%", height: "100%" }}
-            >
-              <ZoomableGroup zoom={1} minZoom={1} maxZoom={1} disablePanning>
-                <Geographies geography={geoUrl}>
-                  {({ geographies }) =>
-                    geographies.map((geo) => {
-                      const isHighlighted = highlightedCountries.find(
-                        (c) => c.name === geo.properties.name
-                      );
-                      
-                      return (
-                        <Geography
-                          key={geo.rsmKey}
-                          geography={geo}
-                          onMouseMove={(e) => handleMouseMove(e, geo)}
-                          onMouseLeave={() => setTooltip(null)}
-                          style={{
-                            default: {
-                              fill: isHighlighted ? isHighlighted.color : "#1a1a1a",
-                              stroke: "#000",
-                              strokeWidth: 0.5,
-                              outline: "none",
-                              transition: "all 300ms",
-                            },
-                            hover: {
-                              fill: isHighlighted ? isHighlighted.color : "#2a2a2a",
-                              stroke: isHighlighted ? "#fff" : "#444",
-                              strokeWidth: 1,
-                              outline: "none",
-                              cursor: isHighlighted ? "pointer" : "default"
-                            },
-                            pressed: { outline: "none" }
-                          }}
-                        />
-                      );
-                    })
-                  }
-                </Geographies>
-              </ZoomableGroup>
-            </ComposableMap>
-          </div>
-
-          {/* Floating Glass Legend */}
-          <div className="absolute bottom-8 left-8 right-8 md:left-auto md:w-80 p-6 bg-black/60 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl">
-            <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4 text-center md:text-left">Supported Regions</h4>
-            <div className="space-y-3">
-              {highlightedCountries.map((country, index) => (
-                <div key={index} className="flex items-center justify-between group">
-                  <div className="flex items-center gap-3">
-                    <div 
-                      className="w-2.5 h-2.5 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.2)]" 
-                      style={{ backgroundColor: country.color, boxShadow: `0 0 12px ${country.color}66` }}
+              {highlightedCountries.map((country) => (
+                <Marker key={country.name} coordinates={country.coordinates}>
+                  {/* Point on the map */}
+                  <circle r={2.5} fill={country.color} stroke="#fff" strokeWidth={1} />
+                  
+                  {/* Tooltip positioned using custom offset */}
+                  <g transform={`translate(${country.offset.x}, ${country.offset.y})`}>
+                    <rect
+                      width="130"
+                      height="95"
+                      rx="6"
+                      fill="white"
+                      filter="drop-shadow(0px 5px 10px rgba(0,0,0,0.3))"
                     />
-                    <span className="text-sm font-medium text-gray-300 group-hover:text-white transition-colors">{country.name}</span>
-                  </div>
-                  <span className="text-[10px] font-mono text-gray-600 uppercase tracking-tighter">{country.region}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </motion.div>
+                    <text x="65" y="18" textAnchor="middle" fill="black" fontSize="8" fontWeight="900">
+                      {country.displayLabel}
+                    </text>
+                    <line x1="10" y1="24" x2="120" y2="24" stroke="#eee" strokeWidth="1" />
 
-        {/* Enhanced Tooltip */}
-        <AnimatePresence>
-          {tooltip && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="fixed z-50 px-4 py-2 bg-white text-black text-xs font-bold rounded-full shadow-2xl pointer-events-none flex items-center gap-2"
-              style={{
-                left: position.x + 20,
-                top: position.y - 20,
-              }}
-            >
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: tooltip.color }} />
-              {tooltip.name}
-            </motion.div>
-          )}
-        </AnimatePresence>
+                    {/* Stats Layout */}
+                    <g transform="translate(10, 38)">
+                      {country.stats.slice(0, 4).map((stat, i) => (
+                        <g key={i} transform={`translate(0, ${i * 12})`}>
+                          <text fill="#999" fontSize="6.5">{stat.label}</text>
+                          <text x="50" textAnchor="end" fill="#000" fontSize="6.5" fontWeight="700">{stat.value}</text>
+                        </g>
+                      ))}
+                    </g>
+                    <g transform="translate(70, 38)">
+                      {country.stats.slice(4).map((stat, i) => (
+                        <g key={i} transform={`translate(0, ${i * 12})`}>
+                          <text fill="#999" fontSize="6.5">{stat.label}</text>
+                          <text x="50" textAnchor="end" fill="#000" fontSize="6.5" fontWeight="700">{stat.value}</text>
+                        </g>
+                      ))}
+                    </g>
+                  </g>
+                </Marker>
+              ))}
+            </ZoomableGroup>
+          </ComposableMap>
+        </div>
       </div>
     </section>
   );
