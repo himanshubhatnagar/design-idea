@@ -3,49 +3,141 @@ import { motion, AnimatePresence, useInView, useMotionValue, useSpring } from "f
 import { 
   Search, Globe2, Clock, Heart, Zap, Award, 
   ChevronRight, Database, Briefcase, 
-  ShieldCheck, Wrench, BadgeCheck, LucideIcon 
+  ShieldCheck, Wrench, BadgeCheck, LucideIcon, 
+  TrendingUp, AlertTriangle, Lightbulb, Settings, Terminal
 } from "lucide-react";
 
-// --- 1. Define the Types for easy customization ---
+// --- Types ---
 interface Metric {
   label: string;
   val: string;
-  sub: string;
-  icon: LucideIcon;
+  sub?: string;
   type: "number" | "text";
   suffix?: string;
-}
-
-interface CustomCard {
-  title: string;
-  content: string;
-  icon: LucideIcon;
 }
 
 interface Capability {
   id: string;
   title: string;
   icon: LucideIcon;
-  headings: {
-    portfolio?: string;
-    sectors?: string;
-    support?: string;
-    tools?: string;
-    certs?: string;
-    achievement?: string;
-  };
   services?: string[];
   sectors?: string[];
-  supports?: string[];
   metrics: Metric[];
   efficiency: { savings: string; gains: string };
   award: string;
-  tools?: { name: string; logo: string }[];
-  certifications?: string[];
-  customCards?: CustomCard[]; // This allows you to add extra cards easily
+  awardCount?: number;
 }
 
-// --- Reusable Counter ---
+interface ParentTab {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  categories: Capability[];
+}
+
+// --- Expanded Data Structure (5 Parent Categories) ---
+const tabData: ParentTab[] = [
+  {
+    id: "insights",
+    label: "Insights",
+    icon: TrendingUp,
+    categories: [
+      {
+        id: "research",
+        title: "Research & Benchmarking",
+        icon: Search,
+        services: ["Secondary Research", "Primary Research", "Competitive Intelligence", "ESG Analysis"],
+        sectors: ["Financial Services", "Technology", "Healthcare", "Consumer & Retail"],
+        metrics: [
+          { label: "Hours delivered", val: "450", suffix: "k+", type: "number" },
+          { label: "NPS", val: "98", suffix: "%", type: "number" },
+          { label: "Support for", val: "US and UK", sub: "Global Delivery", type: "text" },
+        ],
+        efficiency: { savings: "55", gains: "12" },
+        awardCount: 2,
+        award: "CII awards for excellence in digitalization and lean initiatives",
+      }
+    ]
+  },
+  {
+    id: "risk",
+    label: "Risk",
+    icon: AlertTriangle,
+    categories: [
+      {
+        id: "quality-risk",
+        title: "Quality & Risk",
+        icon: ShieldCheck,
+        services: ["Audit Support", "Risk Assessment", "Compliance Review"],
+        metrics: [
+          { label: "Compliance", val: "100", suffix: "%", type: "number" },
+          { label: "Risk Mitigation", val: "85", suffix: "%", type: "number" },
+        ],
+        efficiency: { savings: "15", gains: "20" },
+        award: "Best Risk Management Framework 2024",
+      }
+    ]
+  },
+  {
+    id: "strategy",
+    label: "Strategy",
+    icon: Lightbulb,
+    categories: [
+      {
+        id: "market-entry",
+        title: "Market Strategy",
+        icon: Globe2,
+        services: ["Market Sizing", "GTM Strategy", "M&A Pipeline"],
+        metrics: [
+          { label: "Markets Analyzed", val: "45", suffix: "+", type: "number" },
+          { label: "Success Rate", val: "92", suffix: "%", type: "number" },
+        ],
+        efficiency: { savings: "30", gains: "15" },
+        award: "Top Strategic Advisor Award",
+      }
+    ]
+  },
+  {
+    id: "operations",
+    label: "Operations",
+    icon: Settings,
+    categories: [
+      {
+        id: "bus-ops",
+        title: "Business Operations",
+        icon: Briefcase,
+        services: ["CRM Management", "Pipeline Tracking", "Resource Allocation"],
+        metrics: [
+          { label: "Efficiency", val: "450", suffix: "+", type: "number" },
+          { label: "Accuracy", val: "99", suffix: "%", type: "number" },
+        ],
+        efficiency: { savings: "12", gains: "24" },
+        award: "Operational Excellence Milestone",
+      }
+    ]
+  },
+  {
+    id: "technology",
+    label: "Technology",
+    icon: Terminal,
+    categories: [
+      {
+        id: "digital-trans",
+        title: "Digital Transformation",
+        icon: Zap,
+        services: ["Automation", "Cloud Strategy", "AI Implementation"],
+        metrics: [
+          { label: "Bots Deployed", val: "120", suffix: "+", type: "number" },
+          { label: "Uptime", val: "99.9", suffix: "%", type: "number" },
+        ],
+        efficiency: { savings: "100", gains: "45" },
+        award: "Innovation Leader in AI & Robotics",
+      }
+    ]
+  }
+];
+
+// --- Counter Component ---
 const RollingNumber = ({ value, suffix = "" }: { value: string; suffix?: string }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true });
@@ -54,81 +146,61 @@ const RollingNumber = ({ value, suffix = "" }: { value: string; suffix?: string 
   const springValue = useSpring(motionValue, { damping: 30, stiffness: 100 });
   const [current, setCurrent] = useState("0");
 
-  useEffect(() => { if (isInView) motionValue.set(numericValue); }, [isInView, numericValue, motionValue]);
-  useEffect(() => { return springValue.on("change", (v) => setCurrent(Math.floor(v).toLocaleString())); }, [springValue]);
+  useEffect(() => { if (isInView) motionValue.set(numericValue); }, [isInView, numericValue]);
+  useEffect(() => springValue.on("change", (v) => setCurrent(Math.floor(v).toLocaleString())), [springValue]);
 
   return <span ref={ref}>{current}{suffix}</span>;
 };
 
-// --- 2. Data Structure (Add or remove fields as needed) ---
-const capabilityData: Capability[] = [
-  {
-    id: "research",
-    title: "Research & Benchmarking",
-    icon: Search,
-    headings: {
-      portfolio: "Service Portfolio",
-      sectors: "Sectors",
-      support: "Supports",
-      tools: "Tools Supported",
-      certs: "Certifications",
-      achievement: "Achievement"
-    },
-    supports: ["Market Analysis", "Competitor Intelligence", "Financial Benchmarking"],
-    sectors: ["Financial Services", "Technology", "Healthcare"],
-    metrics: [
-      { label: "Global Support", val: "US & UK", sub: "UK(60) | US(50)", icon: Globe2, type: "text" },
-      { label: "Total Delivery", val: "590", sub: "Hours Delivered", suffix: "+", icon: Clock, type: "number" },
-      { label: "Quality NPS", val: "97", sub: "Satisfaction Score", suffix: "%", icon: Heart, type: "number" },
-    ],
-    efficiency: { savings: "20000", gains: "19%" },
-    award: "Excellence in Digitalization and Lean Initiatives",
-    tools: [{ name: "Bloomberg", logo: "https://logo.clearbit.com/bloomberg.com" }],
-    certifications: ["ISO 9001", "PMP Certified Team"],
-    customCards: [] 
-  },
-  {
-    id: "account-mgmt",
-    title: "Account Management",
-    icon: Briefcase,
-    headings: {
-      portfolio: "Account Scope",
-      achievement: "Process Milestone"
-    },
-    // No Sectors, Tools, or Certs here - the UI will auto-hide them
-    services: ["CRM Management", "Pipeline Tracking"],
-    metrics: [
-      { label: "Active Accounts", val: "120", sub: "Managed", suffix: "+", icon: Database, type: "number" },
-      { label: "Data Integrity", val: "99", sub: "Accuracy", suffix: "%", icon: ShieldCheck, type: "number" },
-      { label: "Efficiency", val: "450", sub: "Saved", suffix: "+", icon: Zap, type: "number" },
-    ],
-    efficiency: { savings: "12500", gains: "24%" },
-    award: "Best-in-class Process Optimization",
-    customCards: [
-      { title: "Engagement Model", content: "Dedicated resource model with 24-hour turnaround.", icon: Clock }
-    ]
-  }
-];
-
 export const ResearchSection = () => {
-  const [activeId, setActiveId] = useState(capabilityData[0].id);
-  const activeData = capabilityData.find(d => d.id === activeId) || capabilityData[0];
+  const [activeParentId, setActiveParentId] = useState(tabData[0].id);
+  const [activeChildId, setActiveChildId] = useState(tabData[0].categories[0].id);
+
+  const activeParent = tabData.find(t => t.id === activeParentId) || tabData[0];
+  const activeData = activeParent.categories.find(c => c.id === activeChildId) || activeParent.categories[0];
+
+  const handleParentChange = (id: string) => {
+    setActiveParentId(id);
+    const newParent = tabData.find(t => t.id === id);
+    if (newParent && newParent.categories.length > 0) {
+      setActiveChildId(newParent.categories[0].id);
+    }
+  };
 
   return (
     <section className="py-20 bg-[#020202] text-white min-h-screen">
       <div className="container mx-auto px-6">
+        
+        {/* 1. TOP LEVEL TABS (All 5 Categories) */}
+        <div className="flex justify-center mb-12 overflow-x-auto no-scrollbar">
+          <div className="flex bg-white/5 p-1 rounded-full border border-white/10 whitespace-nowrap">
+            {tabData.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => handleParentChange(tab.id)}
+                className={`flex items-center gap-2 px-6 py-3 rounded-full transition-all text-xs font-bold ${
+                  activeParentId === tab.id ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"
+                }`}
+              >
+                <tab.icon size={14} />
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="flex flex-col lg:flex-row gap-8 bg-[#0a0a0a] border border-white/5 rounded-[3rem] overflow-hidden">
           
-          {/* SIDEBAR */}
+          {/* 2. SIDEBAR (Child Tabs for active parent) */}
           <div className="lg:w-80 bg-white/[0.02] border-r border-white/5 p-8">
-            <h3 className="text-xl font-black italic text-blue-500 mb-10">KPMG BU</h3>
+            <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-6">Explore {activeParent.label}</p>
             <nav className="flex flex-col gap-2">
-              {capabilityData.map((item) => (
+              {activeParent.categories.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => setActiveId(item.id)}
+                  onClick={() => setActiveChildId(item.id)}
                   className={`flex items-center gap-4 px-5 py-4 rounded-2xl transition-all text-left ${
-                    activeId === item.id ? "bg-blue-600 text-white" : "text-gray-500 hover:bg-white/5"
+                    activeChildId === item.id ? "bg-white/10 text-blue-400 border border-white/10" : "text-gray-500 hover:bg-white/5"
                   }`}
                 >
                   <item.icon size={18} />
@@ -138,124 +210,81 @@ export const ResearchSection = () => {
             </nav>
           </div>
 
-          {/* MAIN CONTENT */}
+          {/* 3. MAIN CONTENT (Bento Grid) */}
           <div className="flex-1 p-8 lg:p-12">
             <AnimatePresence mode="wait">
-              <motion.div key={activeId} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                
-                {/* Row 1: Services & Sectors */}
-                {(activeData.services || activeData.sectors) && (
-                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-12 mb-12">
+              <motion.div 
+                key={activeChildId}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="mb-8">
+                  <h2 className="text-4xl font-bold">{activeData.title}</h2>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 auto-rows-auto">
+                  
+                  {/* Services & Sectors Column */}
+                  <div className="md:row-span-3 bg-white/[0.03] p-8 rounded-[2rem] border border-white/5">
                     {activeData.services && (
-                      <div>
-                        <h4 className="text-xs font-black text-blue-500 uppercase tracking-[0.4em] mb-6">{activeData.headings.portfolio || "Services"}</h4>
-                        <div className="grid grid-cols-2 gap-4">
+                      <div className="mb-8">
+                        <h4 className="text-sm font-bold underline decoration-blue-500 underline-offset-8 mb-6">Services Offered:</h4>
+                        <ul className="space-y-3">
                           {activeData.services.map((s, i) => (
-                            <div key={i} className="flex items-center gap-2 text-sm text-gray-300">
-                              <ChevronRight size={14} className="text-blue-600" /> {s}
-                            </div>
+                            <li key={i} className="text-xs text-gray-400 flex items-start gap-2">
+                              <span className="w-1 h-1 rounded-full bg-blue-500 mt-1.5" /> {s}
+                            </li>
                           ))}
-                        </div>
+                        </ul>
                       </div>
                     )}
                     {activeData.sectors && (
-                      <div className="bg-white/[0.03] p-6 rounded-3xl border border-white/5">
-                        <p className="text-[10px] text-gray-500 font-bold uppercase mb-4 tracking-widest">{activeData.headings.sectors || "Sectors"}</p>
-                        <div className="flex flex-wrap gap-2">
-                          {activeData.sectors.map((s) => (
-                            <span key={s} className="px-3 py-1 bg-black/40 border border-white/10 rounded text-[10px] text-gray-400">{s}</span>
+                      <div>
+                        <h4 className="text-sm font-bold underline decoration-blue-500 underline-offset-8 mb-6">Sectors:</h4>
+                        <ul className="space-y-3">
+                          {activeData.sectors.map((s, i) => (
+                            <li key={i} className="text-xs text-gray-400 flex items-start gap-2">
+                              <span className="w-1 h-1 rounded-full bg-blue-500 mt-1.5" /> {s}
+                            </li>
                           ))}
-                        </div>
-                      </div>
-                    )}
-                    {activeData.sectors && (
-                      <div className="bg-white/[0.03] p-6 rounded-3xl border border-white/5">
-                        <p className="text-[10px] text-gray-500 font-bold uppercase mb-4 tracking-widest">{activeData.headings.support || "Sectors"}</p>
-                        <div className="flex flex-wrap gap-2">
-                          {activeData.supports.map((s) => (
-                            <span key={s} className="px-3 py-1 bg-black/40 border border-white/10 rounded text-[10px] text-gray-400">{s}</span>
-                          ))}
-                        </div>
+                        </ul>
                       </div>
                     )}
                   </div>
-                )}
 
-                {/* Row 2: Metrics */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  {activeData.metrics.map((m, i) => (
-                    <div key={i} className="bg-white/[0.02] border border-white/5 p-8 rounded-3xl">
-                      <m.icon className="text-blue-500 mb-6" size={24} />
-                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{m.label}</p>
-                      <div className="text-3xl font-black">
-                        {m.type === "number" ? <RollingNumber value={m.val} suffix={m.suffix} /> : m.val}
+                  {/* Metrics Cards */}
+                  <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {activeData.metrics.map((m, i) => (
+                      <div key={i} className="bg-white/[0.02] border border-white/5 p-6 rounded-3xl hover:bg-white/[0.04] transition-all">
+                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-2">{m.label}</p>
+                        <div className="text-2xl font-black">
+                          {m.type === "number" ? <RollingNumber value={m.val} suffix={m.suffix} /> : m.val}
+                        </div>
+                        {m.sub && <p className="text-[10px] text-blue-400 mt-2 font-medium">{m.sub}</p>}
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
 
-                {/* Row 3: Tools, Certs, & Extra Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                  {activeData.tools && (
-                    <div className="bg-[#0f1115] border border-white/5 p-6 rounded-3xl">
-                      <div className="flex items-center gap-2 mb-4 text-blue-400">
-                        <Wrench size={16} />
-                        <span className="text-[10px] font-bold uppercase tracking-widest">{activeData.headings.tools || "Tools"}</span>
-                      </div>
-                      <div className="flex flex-wrap gap-6 items-center">
-                        {activeData.tools.map((tool, i) => (
-                          <img key={i} src={tool.logo} alt={tool.name} className="h-6 opacity-60 grayscale hover:grayscale-0 hover:opacity-100 transition-all" />
-                        ))}
-                      </div>
+                    {/* Efficiency Stats */}
+                    <div className="bg-gradient-to-br from-blue-600/10 to-transparent p-6 rounded-3xl border border-blue-500/10 flex justify-between items-center">
+                       <div>
+                         <div className="text-2xl font-black">~<RollingNumber value={activeData.efficiency.savings} suffix="k" /></div>
+                         <p className="text-[9px] text-gray-500 uppercase font-bold">hrs savings</p>
+                       </div>
+                       <div className="text-right">
+                         <div className="text-2xl font-black"><RollingNumber value={activeData.efficiency.gains} suffix="%" /></div>
+                         <p className="text-[9px] text-gray-500 uppercase font-bold">Efficiency gains</p>
+                       </div>
                     </div>
-                  )}
-                  {activeData.certifications && (
-                    <div className="bg-[#0f1115] border border-white/5 p-6 rounded-3xl">
-                      <div className="flex items-center gap-2 mb-4 text-emerald-400">
-                        <BadgeCheck size={16} />
-                        <span className="text-[10px] font-bold uppercase tracking-widest">{activeData.headings.certs || "Certifications"}</span>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {activeData.certifications.map((cert, i) => (
-                          <span key={i} className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-full text-[10px] font-bold">{cert}</span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {/* Clean fix for the customCards map error */}
-                  {activeData.customCards?.map((card, i) => (
-                    <div key={i} className="bg-white/[0.02] border border-white/5 p-6 rounded-3xl">
-                      <div className="flex items-center gap-2 mb-4 text-blue-400">
-                        <card.icon size={16} />
-                        <span className="text-[10px] font-bold uppercase tracking-widest">{card.title}</span>
-                      </div>
-                      <p className="text-sm text-gray-400">{card.content}</p>
-                    </div>
-                  ))}
-                </div>
 
-                {/* Row 4: Efficiency & Award */}
-                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                  <div className="lg:col-span-2 bg-gradient-to-br from-blue-600/10 to-transparent p-8 rounded-[2rem] border border-blue-500/10">
-                    <Zap className="text-blue-400 mb-6" size={24} />
-                    <div className="flex justify-between">
-                      <div>
-                        <div className="text-3xl font-black"><RollingNumber value={activeData.efficiency.savings} /></div>
-                        <p className="text-[10px] text-blue-400 font-bold uppercase mt-1">Hrs Saved</p>
-                      </div>
-                      <div>
-                        <div className="text-3xl font-black"><RollingNumber value={activeData.efficiency.gains} suffix="%" /></div>
-                        <p className="text-[10px] text-blue-400 font-bold uppercase mt-1">Gain</p>
-                      </div>
+                    {/* Achievement/Award */}
+                    <div className="bg-white/[0.02] border border-white/5 p-6 rounded-3xl flex gap-4 items-center overflow-hidden">
+                      {activeData.awardCount && <div className="text-4xl font-black text-blue-500/30">{activeData.awardCount}</div>}
+                      <p className="text-[10px] leading-relaxed text-gray-400 italic">{activeData.award}</p>
                     </div>
                   </div>
-                  <div className="lg:col-span-3 bg-white/[0.02] p-8 rounded-[2rem] border border-white/5 relative overflow-hidden group">
-                    <Award className="absolute -right-8 -bottom-8 text-white/[0.02] group-hover:text-blue-500/10 transition-all" size={180} />
-                    <span className="text-xs font-black text-blue-500 uppercase tracking-widest block mb-4 italic">{activeData.headings.achievement || "Achievement"}</span>
-                    <p className="text-sm text-gray-300 leading-relaxed font-medium">{activeData.award}</p>
-                  </div>
                 </div>
-
               </motion.div>
             </AnimatePresence>
           </div>
